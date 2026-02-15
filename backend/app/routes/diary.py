@@ -1,9 +1,10 @@
-from typing import List
+from typing import List, Optional
 from uuid import UUID
+from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
-from sqlalchemy import desc
+from sqlalchemy import desc, and_
 
 from app.database import get_db
 from app.schemas.diary_entry import (
@@ -56,17 +57,31 @@ def create_entry(
 )
 def list_entries(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    from_date: Optional[datetime] = Query(None, description="Start date for filtering"),
+    to_date: Optional[datetime] = Query(None, description="End date for filtering"),
+    search: Optional[str] = Query(None, description="Search text in raw_text or improved_text")
 ):
-    return (
-        db.query(DiaryEntry)
-        .filter(
-            DiaryEntry.user_id == current_user.id,
-            DiaryEntry.is_deleted == False
-        )
-        .order_by(desc(DiaryEntry.created_at))
-        .all()
+    query = db.query(DiaryEntry).filter(
+        DiaryEntry.user_id == current_user.id,
+        DiaryEntry.is_deleted == False
     )
+    
+    # Apply date filters
+    if from_date:
+        query = query.filter(DiaryEntry.created_at >= from_date)
+    if to_date:
+        query = query.filter(DiaryEntry.created_at <= to_date)
+    
+    # Apply search filter
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.filter(
+            (DiaryEntry.raw_text.ilike(search_pattern)) |
+            (DiaryEntry.improved_text.ilike(search_pattern))
+        )
+    
+    return query.order_by(desc(DiaryEntry.created_at)).all()
 
 
 

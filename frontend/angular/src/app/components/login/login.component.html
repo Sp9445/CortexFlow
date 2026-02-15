@@ -1,0 +1,29 @@
+<div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+	<div class="w-full max-w-md bg-white rounded-lg shadow-md p-6">
+		<h1 class="text-2xl font-semibold mb-4 text-center">Login</h1>
+
+		<form (ngSubmit)="submit()" class="space-y-4">
+			<div>
+				<label class="block text-sm font-medium text-gray-700">Username</label>
+				<input [(ngModel)]="loginFormData.username" name="username" type="text" required
+					class="mt-1 block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+			</div>
+
+			<div>
+				<label class="block text-sm font-medium text-gray-700">Password</label>
+				<input [(ngModel)]="loginFormData.password" name="password" type="password" required
+					class="mt-1 block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+			</div>
+
+			<button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-md">Log in</button>
+
+			<div *ngIf="errorMessage" class="mt-2 text-sm text-red-600">{{ errorMessage }}</div>
+			<div *ngIf="successMessage" class="mt-2 text-sm text-green-600">{{ successMessage }}</div>
+		</form>
+
+		<div class="mt-6 border-t pt-4">
+			<a routerLink="/signup"
+				class="mt-2 w-full bg-green-600 text-white py-2 rounded-md inline-block text-center">Sign up</a>
+		</div>
+	</div>
+</div>

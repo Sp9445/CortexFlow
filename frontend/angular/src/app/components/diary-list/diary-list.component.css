@@ -1,0 +1,69 @@
+/* Diary List Component Styles */
+
+:host {
+	display: block;
+}
+
+.line-clamp-5 {
+	display: -webkit-box;
+	-webkit-line-clamp: 5;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+/* Smooth transitions */
+.transition {
+	transition: all 0.3s ease-in-out;
+}
+
+/* Button hover effects */
+button {
+	transition: all 0.2s ease;
+}
+
+button:active {
+	transform: scale(0.98);
+}
+
+/* Card hover effect */
+.shadow-md:hover {
+	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Date input styling */
+input[type="date"],
+input[type="text"] {
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input[type="date"]:focus,
+input[type="text"]:focus {
+	border-color: #3b82f6;
+	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Responsive grid */
+@media (max-width: 768px) {
+	.grid {
+		grid-template-columns: 1fr !important;
+	}
+}
+
+/* Badge styling */
+.bg-green-100 {
+	background-color: #dcfce7;
+}
+
+.text-green-800 {
+	color: #166534;
+}
+
+/* Gradient header in cards */
+.bg-gradient-to-r {
+	background: linear-gradient(to right, #3b82f6, #1e40af);
+}
+
+/* Loading state */
+.text-gray-600 {
+	color: #4b5563;
+}
