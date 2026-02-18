@@ -111,6 +111,10 @@ export class DiaryListComponent implements OnInit {
         this.router.navigate(['/diary/edit/0']);
     }
 
+	onNewChat(): void {
+		this.router.navigate(['/ai-chat']);
+	}
+
     onNoteClick(entry: DiaryEntry): void {
         this.router.navigate(['/diary/edit/', entry.id]);
     }

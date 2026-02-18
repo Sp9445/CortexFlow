@@ -2,6 +2,10 @@
 	<!-- Header with New Note Button -->
 	<div class="bg-white shadow-sm border-b border-gray-200">
 		<div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+			<button (click)="onNewChat()"
+				class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium transition">
+				AI Chat
+			</button>
 			<h1 class="text-3xl font-semibold text-gray-900">My Diary</h1>
 			<button (click)="onNewNote()"
 				class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium transition">

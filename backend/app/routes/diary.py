@@ -182,3 +182,62 @@ def delete_entry(
 
     return None
 
+
+# ----------------------------------------
+# SERVICE FUNCTION: search diary (for MCP tools)
+# ----------------------------------------
+def search_diary_entries(
+    user_id: UUID,
+    query: str,
+    from_date: Optional[datetime] = None,
+    to_date: Optional[datetime] = None,
+    db: Optional[Session] = None
+) -> List[dict]:
+    """
+    Service function to search diary entries for a specific user.
+    Used by MCP tools and other internal services.
+    Returns a list of plain dicts (not ORM objects).
+    """
+    if db is None:
+        from app.database import SessionLocal
+        db = SessionLocal()
+        should_close = True
+    else:
+        should_close = False
+    
+    try:
+        search_query = db.query(DiaryEntry).filter(
+            DiaryEntry.user_id == user_id,
+            DiaryEntry.is_deleted == False
+        )
+        
+        # Apply date filters
+        if from_date:
+            search_query = search_query.filter(DiaryEntry.created_at >= from_date)
+        if to_date:
+            search_query = search_query.filter(DiaryEntry.created_at <= to_date)
+        
+        # Apply search filter
+        if query:
+            search_pattern = f"%{query}%"
+            search_query = search_query.filter(
+                (DiaryEntry.raw_text.ilike(search_pattern)) |
+                (DiaryEntry.improved_text.ilike(search_pattern))
+            )
+        
+        entries = search_query.order_by(desc(DiaryEntry.created_at)).all()
+        
+        # Convert to plain dicts for JSON serialization
+        return [
+            {
+                "id": str(entry.id),
+                "created_at": entry.created_at.isoformat() if entry.created_at else None,
+                "raw_text": entry.raw_text,
+                "improved_text": entry.improved_text,
+            }
+            for entry in entries
+        ]
+    finally:
+        if should_close:
+            db.close()
+

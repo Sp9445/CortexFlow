@@ -43,12 +43,6 @@
 						<span *ngIf="!canShowActions" class="text-blue-600 ml-2">(Minimum 25 characters required)</span>
 					</div>
 				</div>
-
-				<!-- Action Buttons -->
-				 <div>
-  Improving: {{ isImproving }} |
-  CanShow: {{ canShowActions }}
-</div>
 				<div *ngIf="canShowActions" class="flex gap-3">
 					<button (click)="onImprove()" [disabled]="isImproving || isSaving"
 						class="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white py-2 rounded-lg font-medium transition">

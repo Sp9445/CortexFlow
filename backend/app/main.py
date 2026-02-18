@@ -7,7 +7,7 @@ from app.database import Base, engine
 from app.models import user, diary_entry, refresh_token
 
 # Import routers
-from app.routes import auth, diary, ai
+from app.routes import auth, diary, ai, mcp_server
 
 
 app = FastAPI(
@@ -38,6 +38,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(diary.router)
 app.include_router(ai.router)
+app.include_router(mcp_server.router)
 
 
 # ----------------------------

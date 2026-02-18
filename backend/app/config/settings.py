@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     GROK_BASE_URL:str
     GROK_API_KEY: str
     AI_MODEL:str
+    
+    # API Configuration
+    API_ROOT: str = "http://localhost:8000"
+    INTERNAL_SERVICE_TOKEN: str = ""
 
     class Config:
         env_file = env_file

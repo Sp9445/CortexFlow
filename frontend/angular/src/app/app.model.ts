@@ -62,6 +62,16 @@ export interface DiaryEntryUpdateRequest {
   is_improved?: boolean;
 }
 
+// AI Chat Models
+export interface AIMessage {
+  role: string;  // "user" or "assistant"
+  content: string;
+}
+
+export interface AIMessages {
+  messages: AIMessage[];
+}
+
 // API Response Models
 export interface ApiResponse<T> {
   success: boolean;

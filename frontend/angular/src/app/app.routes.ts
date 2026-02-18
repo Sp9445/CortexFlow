@@ -1,7 +1,8 @@
 import { Routes } from '@angular/router';
-import { LoginComponent, SignupComponent, DiaryListComponent, EditDiaryNoteComponent } from './components';
+import { LoginComponent, SignupComponent, DiaryListComponent, EditDiaryNoteComponent, AIChatComponent } from './components';
 
 export const routes: Routes = [
+  { path: 'ai-chat', component: AIChatComponent },
   { path: 'login', component: LoginComponent },
   { path: 'signup', component: SignupComponent },
   { path: 'diary', component: DiaryListComponent },

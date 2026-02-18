@@ -1,0 +1,52 @@
+<div class="ai-shell">
+	<header class="ai-header">
+		<div>
+			<p class="eyebrow">Diary AI</p>
+			<p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
+		</div>
+		<button (click)="resetChat()" class="reset-button" aria-label="Start new chat">
+			<svg viewBox="0 0 24 24" focusable="false">
+				<path
+					d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2ZM11.9999 5C14.7617 5.00001 17.0001 7.23839 17.0001 10C17.0001 12.7616 14.7617 15 11.9999 15C9.23811 15 7.00001 12.7616 7.00001 10C7.00001 7.23839 9.23811 5.00001 11.9999 5Z"
+					fill="currentColor" />
+			</svg>
+		</button>
+	</header>
+
+	<section #messagesContainer class="ai-messages" role="log" aria-live="polite">
+		<ng-container *ngIf="messages.length; else emptyState">
+			<article *ngFor="let message of messages" class="message"
+				[ngClass]="message.role === 'assistant' ? 'assistant' : 'user'">
+				<p class="role">{{ message.role === 'assistant' ? 'Assistant' : 'You' }}</p>
+				<div class="message-text" [innerHTML]="formatMessage(message.content)"></div>
+			</article>
+		</ng-container>
+		<ng-template #emptyState>
+			<p class="empty">Waiting for the AI to say hi…</p>
+		</ng-template>
+	</section>
+
+	<form class="composer" (ngSubmit)="submit()" autocomplete="off">
+		<label class="sr-only" for="aiChatInput">Type a message</label>
+		<textarea id="aiChatInput" name="message" [(ngModel)]="prompt" class="composer-input"
+			placeholder="Ask anything about your diary…" rows="2" [disabled]="loading"></textarea>
+		<div class="composer-actions">
+			<button type="submit" class="send-button" [disabled]="!prompt.trim() || loading">
+				<span *ngIf="!loading" class="send-icon" aria-hidden="true">
+					<svg viewBox="0 0 24 24" focusable="false">
+						<path d="M3 12L21 3L14 19L11 14L3 12Z" fill="currentColor" />
+					</svg>
+				</span>
+				<!-- <span class="send-label">{{ loading ? 'Waiting' : 'Send' }}</span> -->
+				<span *ngIf="loading" class="loading-dots" aria-hidden="true">
+					<span></span>
+					<span></span>
+					<span></span>
+				</span>
+				<!-- <span class="sr-only">
+          {{ loading ? 'Waiting for AI response' : 'Send message' }}
+        </span> -->
+			</button>
+		</div>
+	</form>
+</div>
