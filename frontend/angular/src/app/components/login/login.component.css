@@ -1,0 +1,2 @@
+/* Minimal CSS; Tailwind handles layout and styling */
+:host { display: block; }

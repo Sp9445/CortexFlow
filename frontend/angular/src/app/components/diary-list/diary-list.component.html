@@ -1,0 +1,113 @@
+<div class="min-h-screen bg-gray-50">
+	<!-- Header with New Note Button -->
+	<div class="bg-white shadow-sm border-b border-gray-200">
+		<div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+			<button (click)="onNewChat()"
+				class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium transition">
+				AI Chat
+			</button>
+			<h1 class="text-3xl font-semibold text-gray-900">My Diary</h1>
+			<button (click)="onNewNote()"
+				class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium transition">
+				+ New Note
+			</button>
+		</div>
+	</div>
+
+	<!-- Main Content -->
+	<div class="max-w-6xl mx-auto px-4 py-8">
+		<!-- Filter Section -->
+		<div class="bg-white rounded-lg shadow-md p-6 mb-8">
+			<h2 class="text-lg font-semibold text-gray-900 mb-4">Filter Entries</h2>
+
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+				<!-- From Date -->
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-1">From Date</label>
+					<input type="date" [(ngModel)]="fromDate" name="fromDate"
+						class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+				</div>
+
+				<!-- To Date -->
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+					<input type="date" [(ngModel)]="toDate" name="toDate"
+						class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+				</div>
+
+				<!-- Search -->
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+					<input type="text" [(ngModel)]="searchText" name="search"
+						placeholder="Search text..."
+						class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+				</div>
+			</div>
+
+			<!-- Filter Buttons -->
+			<div class="flex gap-3 mt-4">
+				<button (click)="onSearch()"
+					class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium transition">
+					Search
+				</button>
+				<button (click)="resetFilters()"
+					class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-md font-medium transition">
+					Reset
+				</button>
+			</div>
+
+			<!-- Error Message -->
+			<div *ngIf="errorMessage" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+				<p class="text-sm text-red-700">{{ errorMessage }}</p>
+			</div>
+		</div>
+
+		<!-- Loading State -->
+		<div *ngIf="isLoading" class="text-center py-8">
+			<p class="text-gray-600">{{ loadingMessage }}</p>
+		</div>
+
+		<!-- Empty State -->
+		<div *ngIf="!isLoading && diaryEntries.length === 0" class="text-center py-12 bg-white rounded-lg shadow-md">
+			<p class="text-lg text-gray-600">No diary entries found.</p>
+			<p class="text-sm text-gray-500 mt-2">Start by creating your first note!</p>
+		</div>
+
+		<!-- Diary Entries Grid -->
+		<div *ngIf="!isLoading && diaryEntries.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+			<div *ngFor="let entry of diaryEntries" (click)="onNoteClick(entry)"
+				class="bg-white rounded-lg shadow-md hover:shadow-lg transition cursor-pointer overflow-hidden">
+
+				<!-- Entry Date Header -->
+				<div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-3">
+					<p class="text-sm font-medium">{{ formatDate(entry.created_at) }}</p>
+				</div>
+
+				<!-- Entry Content -->
+				<div class="p-4">
+					<!-- Better title based on content or improved text -->
+					<div *ngIf="entry.is_improved && entry.improved_text" class="mb-2">
+						<span class="inline-block bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">
+							Improved
+						</span>
+					</div>
+
+					<!-- Text Content -->
+					<p class="text-gray-700 text-sm line-clamp-5">
+						{{ truncateText(entry.improved_text || entry.raw_text) }}
+					</p>
+
+					<!-- Footer -->
+					<div class="mt-4 pt-3 border-t border-gray-200">
+						<div class="flex justify-between items-center">
+							<p class="text-xs text-gray-500">
+								Last updated: {{ formatDate(entry.updated_at) }}
+							</p>
+							<span class="text-blue-600 text-sm font-medium">View →</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
