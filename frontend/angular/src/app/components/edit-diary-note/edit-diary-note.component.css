@@ -1,107 +1,177 @@
-/* Edit Diary Note Component Styles */
-
 :host {
-	display: block;
+  display: block;
 }
 
-/* Textarea Styling */
-textarea {
-	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-	line-height: 1.6;
-	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+.editor-shell {
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #1e1f3b 0%, #0b0f1c 65%);
+  color: #e2e8f0;
 }
 
-textarea:focus {
-	border-color: #3b82f6;
-	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+.editor-wrapper {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2.5rem 1.4rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-/* Read-only text display */
-.whitespace-pre-wrap {
-	word-wrap: break-word;
-	white-space: pre-wrap;
+.editor-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.4);
+  padding-bottom: 1rem;
 }
 
-/* Button Styling */
-button {
-	transition: all 0.2s ease;
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(15, 23, 42, 0.9);
+  color: #e2e8f0;
 }
 
-button:active:not(:disabled) {
-	transform: scale(0.98);
+.title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
-button:disabled {
-	cursor: not-allowed;
-	opacity: 0.7;
+.title-block h1 {
+  margin: 0;
+  font-size: 2rem;
+  text-transform: capitalize;
 }
 
-/* Badge Styling */
-.bg-green-100 {
-	background-color: #dcfce7;
+.editor-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.text-green-800 {
-	color: #166534;
+.status-card {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 0.9rem;
+  padding: 1rem 1.25rem;
+  color: #d1d5db;
 }
 
-/* Text Display Areas */
-.bg-gray-50 {
-	background-color: #f9fafb;
+.error-card {
+  border-color: rgba(248, 113, 113, 0.5);
+  color: #fecaca;
 }
 
-.bg-green-50 {
-	background-color: #f0fdf4;
+.success-card {
+  border-color: rgba(52, 211, 153, 0.5);
+  color: #bbf7d0;
 }
 
-/* Scrollable containers */
-.overflow-y-auto {
-	scrollbar-width: thin;
-	scrollbar-color: #cbd5e1 #f1f5f9;
+.editor-card {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 20px 35px rgba(2, 6, 23, 0.65);
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
 }
 
-.overflow-y-auto::-webkit-scrollbar {
-	width: 6px;
+.field-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.overflow-y-auto::-webkit-scrollbar-track {
-	background: #f1f5f9;
-	border-radius: 4px;
+.field-label {
+  font-size: 0.95rem;
+  color: #cbd5f5;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
 }
 
-.overflow-y-auto::-webkit-scrollbar-thumb {
-	background: #cbd5e1;
-	border-radius: 4px;
+.note-editor {
+  width: 100%;
+  min-height: 240px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  border-radius: 0.85rem;
+  padding: 1rem;
+  color: #e2e8f0;
+  font-size: 1rem;
+  line-height: 1.6;
+  resize: vertical;
+  font-family: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.overflow-y-auto::-webkit-scrollbar-thumb:hover {
-	background: #94a3b8;
+.note-editor:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-	textarea {
-		font-size: 16px; /* Prevents zoom on iOS */
-	}
-
-	.flex {
-		flex-direction: column;
-	}
-
-	.gap-3 {
-		gap: 1rem;
-	}
+.helper-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #9ca3af;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
-/* Text input focus effect */
-input[type="text"]:focus,
-input[type="date"]:focus {
-	border-color: #3b82f6;
-	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+.text-warning {
+  color: #facc15;
 }
 
-/* Character counter */
-.text-xs {
-	font-size: 0.75rem;
-	line-height: 1rem;
+.action-row {
+  display: flex;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.highlight-card {
+  border: 1px solid rgba(34, 197, 94, 0.6);
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.improved-text {
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 0.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  padding: 1rem;
+  color: #e2e8f0;
+  min-height: 140px;
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: rgba(16, 185, 129, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+@media (max-width: 640px) {
+  .editor-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .action-row {
+    width: 100%;
+  }
 }

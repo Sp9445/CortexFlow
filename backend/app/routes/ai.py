@@ -91,9 +91,16 @@ def build_payload(user_message: AIMessage) -> dict:
 
 def call_search_tool(args: dict) -> dict:
     url = f"{settings.API_ROOT}/tools/searchDiaryEntryTool"
-    response = httpx.post(url, json=args, timeout=10.0)
-    response.raise_for_status()
-    return response.json()
+    try:
+        response = httpx.post(url, json=args, timeout=20.0)
+        response.raise_for_status()
+        return response.json()
+    except httpx.ReadTimeout as exc:
+        logger.error("Diary search tool timed out for args=%s", args, exc_info=exc)
+        raise HTTPException(status_code=504, detail="Diary lookup timed out") from exc
+    except httpx.HTTPStatusError as exc:
+        logger.error("Diary search tool returned %s for args=%s", exc.response.status_code, args, exc_info=exc)
+        raise HTTPException(status_code=exc.response.status_code, detail="Diary lookup failed") from exc
 
 
 @router.post("/answer", response_model=AIMessages, status_code=201)
@@ -105,7 +112,25 @@ def answer_query(
     user_msg = query_request.messages[-1]
     logger.info("Answering query for user %s (message role=%s)", current_user.id, user_msg.role)
 
-    response = client.chat.completions.create(**build_payload(user_msg))
+    payload = build_payload(user_msg)
+    logger.debug(
+        "Sending Grok payload for user %s (model=%s, tool_choice=%s, prompt_length=%d)",
+        current_user.id,
+        payload.get("model"),
+        payload.get("tool_choice"),
+        len(user_msg.content or ""),
+    )
+
+    try:
+        response = client.chat.completions.create(**payload)
+    except Exception as exc:
+        logger.exception("Grok completion failed for user %s", current_user.id)
+        raise HTTPException(status_code=502, detail="AI service unavailable") from exc
+
+    if not response.choices:
+        logger.warning("Grok returned no choices for user %s", current_user.id)
+        raise HTTPException(status_code=502, detail="AI returned empty response")
+
     message = response.choices[0].message
 
     tool_calls = message.tool_calls or []
@@ -126,10 +151,12 @@ def answer_query(
                 detail=f"Invalid arguments for tool: {exc}",
             ) from exc
 
+        args_dict["query"] = args_dict.get("query") or ""
         args_dict["user_id"] = str(current_user.id)
-        logger.debug("Calling searchDiaryEntryTool for user %s with %s", current_user.id, args_dict)
+        logger.info("Dispatching searchDiaryEntryTool for user %s", current_user.id)
+        logger.debug("searchDiaryEntryTool args: %s", args_dict)
         tool_result = call_search_tool(args_dict)
-        logger.debug("searchDiaryEntryTool returned %d entries", len(tool_result or []))
+        logger.info("searchDiaryEntryTool returned %d entries for user %s", len(tool_result or []), current_user.id)
 
         follow_up_payload = build_payload(user_msg)
         follow_up_payload["messages"] = [
@@ -141,13 +168,24 @@ def answer_query(
                 "content": json.dumps(tool_result),
             },
         ]
+        logger.debug(
+            "Sending follow-up payload with tool result for user %s (messages=%d)",
+            current_user.id,
+            len(follow_up_payload["messages"]),
+        )
         follow_up = client.chat.completions.create(**follow_up_payload)
         final_content = follow_up.choices[0].message.content or ""
-        logger.info("Appending assistant response after tool call (length=%d)", len(final_content))
+        logger.info(
+            "Appending assistant response after tool call (length=%d) for user %s",
+            len(final_content),
+            current_user.id,
+        )
+        logger.debug("Assistant final snippet: %s", final_content[:200])
         query_request.messages.append(AIMessage(role="assistant", content=final_content))
     else:
         plain_content = message.content or ""
-        logger.info("Appending assistant direct response (length=%d)", len(plain_content))
+        logger.info("Appending assistant direct response (length=%d) for user %s", len(plain_content), current_user.id)
+        logger.debug("Assistant direct snippet: %s", plain_content[:200])
         query_request.messages.append(AIMessage(role="assistant", content=plain_content))
 
     return query_request

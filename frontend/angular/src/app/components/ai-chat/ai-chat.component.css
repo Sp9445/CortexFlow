@@ -24,7 +24,20 @@
 	padding-bottom: 1rem;
 }
 
-.ai-header h1 {
+.header-left {
+	display: flex;
+	align-items: flex-start;
+	gap: 1rem;
+	flex: 1;
+	flex-direction: column;
+}
+
+.back-button {
+	background: rgba(148, 163, 184, 0.08);
+	color: #e2e8f0;
+}
+
+ .ai-header h1 {
 	font-size: 2rem;
 	margin-bottom: 0.25rem;
 	text-transform: capitalize;

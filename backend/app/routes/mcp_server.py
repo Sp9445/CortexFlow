@@ -10,7 +10,10 @@ from app.routes.diary import search_diary_entries
 router = APIRouter(prefix="/tools", tags=["MCP Tools"])
 
 class MCPRequest(BaseModel):
-    query: str = Field(..., description="Free‑text search query")
+    query: Optional[str] = Field(
+        None,
+        description="Free-text search query (optional, leave empty to include all entries)"
+    )
     from_date: Optional[datetime] = Field(
         None, description="Inclusive start of the date range (ISO format)"
     )

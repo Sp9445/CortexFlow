@@ -43,12 +43,15 @@ When calling the tool:
 - Always provide:
   - `from_date` (ISO date-time string)
   - `to_date` (ISO date-time string)
-  - `query` (keywords extracted from user query)
+  - `query` (keywords extracted from user query, use `""` when the user is only asking for summaries or general information)
   - `user_id` (null if not available)
 
 - Never send plain dates (like `2026-02-16`)
 - Never send invalid date formats
 - Never omit required fields
+
+### Today's entries
+If the user explicitly references *today*, *today's diary*, *current entry*, or similar phrasing, set `from_date` to today's `00:00:00` and `to_date` to today's `23:59:59` regardless of the default current-month window. Make that range explicit before calling the tool so the retrieved entries focus on the current day.
 
 ---
 

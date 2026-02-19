@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -14,11 +14,12 @@ import { Subscription } from 'rxjs/internal/Subscription';
 	templateUrl: './diary-list.component.html',
 	styleUrls: ['./diary-list.component.css']
 })
-export class DiaryListComponent implements OnInit {
+export class DiaryListComponent implements OnInit, OnDestroy {
 	diaryEntries: DiaryEntry[] = [];
 	errorMessage = '';
 	loadingMessage = '';
 	isLoading = false;
+	showFilters = false;
 
 	// Filter properties
 	fromDate: string = '';
@@ -99,6 +100,11 @@ export class DiaryListComponent implements OnInit {
 
 	async onSearch(): Promise<void> {
 		await this.loadEntries();
+		this.showFilters = false;
+	}
+
+	toggleFilters(): void {
+		this.showFilters = !this.showFilters;
 	}
 
 	resetFilters(): void {
@@ -119,9 +125,9 @@ export class DiaryListComponent implements OnInit {
         this.router.navigate(['/diary/edit/', entry.id]);
     }
 
-    ngOnDestroy(): void {
-        this.subscriptions.forEach(sub => sub.unsubscribe());
-    }
+	ngOnDestroy(): void {
+		this.subscriptions.forEach(sub => sub.unsubscribe());
+	}
 
 	truncateText(text: string, maxLength: number = 200): string {
 		if (!text) return '';

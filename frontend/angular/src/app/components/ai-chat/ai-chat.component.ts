@@ -7,6 +7,7 @@ import { environment } from '../../../environments/environment';
 import { AppService } from '../../app.service';
 import MarkdownIt from 'markdown-it';
 import { AIMessage, AIMessages } from '../../app.model';
+import { Router } from '@angular/router';
 
 const INITIAL_PROMPT =
 	'Hi there! Please introduce yourself and tell me how we can work together on my diary entries.';
@@ -33,7 +34,8 @@ export class AIChatComponent implements OnInit, OnDestroy {
 	constructor(private appService: AppService,
 		private sanitizer: DomSanitizer,
 		private cd: ChangeDetectorRef,
-		private ngZone: NgZone
+		private ngZone: NgZone,
+		private router: Router
 	) { }
 
 	ngOnInit(): void {
@@ -53,6 +55,7 @@ export class AIChatComponent implements OnInit, OnDestroy {
 		const userMessage: AIMessage = { role: 'user', content: trimmed };
 		this.messages = [...this.messages, userMessage];
 		this.prompt = '';
+		this.scrollToBottom();
 		this.sendPayload(this.messages);
 	}
 
@@ -79,6 +82,7 @@ export class AIChatComponent implements OnInit, OnDestroy {
 			.pipe(finalize(() => {
 				this.loading = false;
 				this.cd.detectChanges();
+				this.scrollToBottom();
 			})
 			).subscribe({
 				next: (resp: AIMessages) => {
@@ -114,5 +118,9 @@ export class AIChatComponent implements OnInit, OnDestroy {
 				container.scrollTop = container.scrollHeight;
 			}
 		});
+	}
+
+	goBack(): void {
+		this.router.navigate(['/diary']);
 	}
 }

@@ -188,7 +188,7 @@ def delete_entry(
 # ----------------------------------------
 def search_diary_entries(
     user_id: UUID,
-    query: str,
+    query: Optional[str] = None,
     from_date: Optional[datetime] = None,
     to_date: Optional[datetime] = None,
     db: Optional[Session] = None
@@ -240,4 +240,3 @@ def search_diary_entries(
     finally:
         if should_close:
             db.close()
-

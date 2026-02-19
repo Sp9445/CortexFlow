@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
@@ -36,6 +36,7 @@ export class EditDiaryNoteComponent implements OnInit, OnDestroy {
 	) { }
 
 	private subscriptions: Subscription[] = [];
+	@ViewChild('editorPanel') private editorPanel?: ElementRef<HTMLElement>;
 
 	ngOnInit(): void {
 		this.route.paramMap.subscribe(params => {
@@ -91,14 +92,15 @@ export class EditDiaryNoteComponent implements OnInit, OnDestroy {
 			).subscribe({
 				next: (response: DiaryEntryUpdateRequest) => {
 					console.log('Improve success', response);
-					this.ngZone.run(() => {
-						this.improvedText = response.improved_text || '';
-						this.isImproved = response.is_improved ?? true;
-						this.showImprovedView = true;
-						this.successMessage = 'Text improved successfully!';
-						this.cd.detectChanges();
-					});
-				},
+				this.ngZone.run(() => {
+					this.improvedText = response.improved_text || '';
+					this.isImproved = response.is_improved ?? true;
+					this.showImprovedView = true;
+					this.successMessage = 'Text improved successfully!';
+					this.cd.detectChanges();
+					this.scrollEditorToBottom();
+				});
+			},
 				error: (e: any) => {
 					const error = e?.error as ErrorResponse;
 					this.errorMessage = error?.detail || 'Failed to improve text';
@@ -181,6 +183,15 @@ export class EditDiaryNoteComponent implements OnInit, OnDestroy {
 
 	onBack(): void {
 		this.router.navigate(['/diary']);
+	}
+
+	private scrollEditorToBottom(): void {
+		requestAnimationFrame(() => {
+			const container = this.editorPanel?.nativeElement;
+			if (container) {
+				container.scrollTop = container.scrollHeight;
+			}
+		});
 	}
 
 	getTextLength(): number {

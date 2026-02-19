@@ -1,8 +1,14 @@
 <div class="ai-shell">
 	<header class="ai-header">
-		<div>
-			<p class="eyebrow">Diary AI</p>
-			<p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
+		<div class="header-left">
+			<button type="button" class="ghost-button back-button" (click)="goBack()" aria-label="Back to notes">
+				<span aria-hidden="true">←</span>
+				<span>Back to notes</span>
+			</button>
+			<div>
+				<p class="eyebrow">Diary AI</p>
+				<p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
+			</div>
 		</div>
 		<button (click)="resetChat()" class="reset-button" aria-label="Start new chat">
 			<svg viewBox="0 0 24 24" focusable="false">
