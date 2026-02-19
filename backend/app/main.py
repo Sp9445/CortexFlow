@@ -21,6 +21,7 @@ app = FastAPI(
 
 origins = [
     "http://localhost:4200",  # Angular dev server
+    "https://cortexflow-frontend.onrender.com",
 ]
 
 app.add_middleware(
