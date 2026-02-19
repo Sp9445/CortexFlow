@@ -47,5 +47,6 @@ app.include_router(mcp_server.router)
 # ----------------------------
 
 @app.get("/health")
+@app.head("/health")
 def health_check():
     return {"status": "ok"}
