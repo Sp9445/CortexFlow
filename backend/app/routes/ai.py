@@ -2,15 +2,16 @@
 from pathlib import Path
 import json
 import logging
+from datetime import datetime
+from uuid import UUID
 
-import httpx
 from fastapi import APIRouter, HTTPException, Depends
 from openai import OpenAI
 
 from app.config.settings import settings
 from app.dependencies.auth import get_current_user
 from app.models.user import User
-from app.routes.mcp_server import MCPRequest
+from app.routes.diary import search_diary_entries
 from app.schemas.ai import AIMessage, AIMessages
 from app.schemas.diary_entry import DiaryEntryCreate, DiaryEntryUpdate
 
@@ -63,8 +64,17 @@ def improve_note(entry_data: DiaryEntryCreate):
 
 
 def build_payload(user_message: AIMessage) -> dict:
-    schema = MCPRequest.model_json_schema()
-    required_fields = ["from_date", "to_date"]
+    tool_parameters = {
+        "type": "object",
+        "properties": {
+            "from_date": {"type": "string", "format": "date-time"},
+            "to_date": {"type": "string", "format": "date-time"},
+            "query": {"type": "string"},
+            "user_id": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+        },
+        "required": ["from_date", "to_date", "query", "user_id"],
+    }
+
     return {
         "model": settings.AI_MODEL,
         "messages": [
@@ -77,11 +87,7 @@ def build_payload(user_message: AIMessage) -> dict:
                 "function": {
                     "name": "searchDiaryEntryTool",
                     "description": "Finds diary entries based on date range and search query",
-                    "parameters": {
-                        "type": "object",
-                        "properties": schema["properties"],
-                        "required": required_fields,
-                    },
+                    "parameters": tool_parameters,
                 },
             }
         ],
@@ -89,18 +95,35 @@ def build_payload(user_message: AIMessage) -> dict:
     }
 
 
-def call_search_tool(args: dict) -> dict:
-    url = f"{settings.API_ROOT}/tools/searchDiaryEntryTool"
+def _parse_datetime(value: str | None) -> datetime | None:
+    if not value:
+        return None
     try:
-        response = httpx.post(url, json=args, timeout=20.0)
-        response.raise_for_status()
-        return response.json()
-    except httpx.ReadTimeout as exc:
-        logger.error("Diary search tool timed out for args=%s", args, exc_info=exc)
-        raise HTTPException(status_code=504, detail="Diary lookup timed out") from exc
-    except httpx.HTTPStatusError as exc:
-        logger.error("Diary search tool returned %s for args=%s", exc.response.status_code, args, exc_info=exc)
-        raise HTTPException(status_code=exc.response.status_code, detail="Diary lookup failed") from exc
+        return datetime.fromisoformat(value)
+    except ValueError as exc:
+        logger.warning("Invalid datetime for diary tool: %s", value)
+        raise HTTPException(status_code=400, detail="Invalid date format for diary search") from exc
+
+
+def call_search_tool(args: dict) -> dict:
+    # If args already contain the plain service payload (from tool invocation),
+    # reuse the service layer directly instead of issuing an HTTP request.
+    user_id_value = args.get("user_id")
+    try:
+        user_uuid = UUID(user_id_value) if user_id_value else None
+    except ValueError as exc:
+        logger.error("Invalid user_id provided to diary search tool: %s", user_id_value, exc_info=exc)
+        raise HTTPException(status_code=400, detail="Invalid user_id for diary lookup") from exc
+
+    if user_uuid is None:
+        raise HTTPException(status_code=400, detail="user_id is required for diary lookup")
+
+    return search_diary_entries(
+        user_id=user_uuid,
+        query=args.get("query") or "",
+        from_date=_parse_datetime(args.get("from_date")),
+        to_date=_parse_datetime(args.get("to_date")),
+    )
 
 
 @router.post("/answer", response_model=AIMessages, status_code=201)

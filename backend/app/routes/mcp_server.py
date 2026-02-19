@@ -3,8 +3,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
-from uuid import UUID
 
+from app.dependencies.auth import get_current_user
+from app.models.user import User
 from app.routes.diary import search_diary_entries
 
 router = APIRouter(prefix="/tools", tags=["MCP Tools"])
@@ -25,26 +26,17 @@ class MCPRequest(BaseModel):
     )
 
 @router.post("/searchDiaryEntryTool")
-def search_diary_tool(payload: MCPRequest) -> List[dict]:
+def search_diary_tool(
+    payload: MCPRequest,
+    current_user: User = Depends(get_current_user),
+) -> List[dict]:
     """
     This endpoint searches diary entries for a user.
     The model calls this tool when the user asks questions about their diary.
     
     Returns a **pure JSON‑serialisable list** of diary entries matching the criteria.
     """
-    if not payload.user_id:
-        raise HTTPException(
-            status_code=400,
-            detail="user_id is required in tool parameters"
-        )
-    
-    try:
-        user_uuid = UUID(payload.user_id)
-    except (ValueError, TypeError):
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid user_id format"
-        )
+    user_uuid = current_user.id
     
     # Convert string dates to datetime if provided
     from_dt = None
