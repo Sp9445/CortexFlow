@@ -63,7 +63,27 @@ def improve_note(entry_data: DiaryEntryCreate):
     return new_entry
 
 
-def build_payload(user_message: AIMessage) -> dict:
+def _serialize_messages(messages: list[AIMessage]) -> list[dict]:
+    return [
+        {
+            "role": msg.role,
+            "content": msg.content,
+        }
+        for msg in messages
+    ]
+
+
+def _ensure_response_content(content: str | None) -> str:
+    cleaned = (content or "").strip()
+    if cleaned:
+        return content or ""
+    return (
+        "I couldn't find any useful diary data for that question. "
+        "Could you clarify the timeframe or add more details so I can help?"
+    )
+
+
+def build_payload(messages: list[dict]) -> dict:
     tool_parameters = {
         "type": "object",
         "properties": {
@@ -76,10 +96,11 @@ def build_payload(user_message: AIMessage) -> dict:
     }
 
     return {
+        "reasoning_effort": "medium",
         "model": settings.AI_MODEL,
         "messages": [
             mcp_system_message,
-            {"role": user_message.role, "content": user_message.content},
+            *messages,
         ],
         "tools": [
             {
@@ -135,7 +156,8 @@ def answer_query(
     user_msg = query_request.messages[-1]
     logger.info("Answering query for user %s (message role=%s)", current_user.id, user_msg.role)
 
-    payload = build_payload(user_msg)
+    conversation_dicts = _serialize_messages(query_request.messages)
+    payload = build_payload(conversation_dicts)
     logger.debug(
         "Sending Grok payload for user %s (model=%s, tool_choice=%s, prompt_length=%d)",
         current_user.id,
@@ -181,23 +203,23 @@ def answer_query(
         tool_result = call_search_tool(args_dict)
         logger.info("searchDiaryEntryTool returned %d entries for user %s", len(tool_result or []), current_user.id)
 
-        follow_up_payload = build_payload(user_msg)
-        follow_up_payload["messages"] = [
-            mcp_system_message,
-            {"role": user_msg.role, "content": user_msg.content},
-            {
-                "role": "function",
-                "name": "searchDiaryEntryTool",
-                "content": json.dumps(tool_result),
-            },
-        ]
+        follow_up_payload = build_payload(
+            [
+                *conversation_dicts,
+                {
+                    "role": "function",
+                    "name": "searchDiaryEntryTool",
+                    "content": json.dumps(tool_result),
+                },
+            ]
+        )
         logger.debug(
             "Sending follow-up payload with tool result for user %s (messages=%d)",
             current_user.id,
             len(follow_up_payload["messages"]),
         )
         follow_up = client.chat.completions.create(**follow_up_payload)
-        final_content = follow_up.choices[0].message.content or ""
+        final_content = _ensure_response_content(follow_up.choices[0].message.content)
         logger.info(
             "Appending assistant response after tool call (length=%d) for user %s",
             len(final_content),
@@ -206,7 +228,7 @@ def answer_query(
         logger.debug("Assistant final snippet: %s", final_content[:200])
         query_request.messages.append(AIMessage(role="assistant", content=final_content))
     else:
-        plain_content = message.content or ""
+        plain_content = _ensure_response_content(message.content)
         logger.info("Appending assistant direct response (length=%d) for user %s", len(plain_content), current_user.id)
         logger.debug("Assistant direct snippet: %s", plain_content[:200])
         query_request.messages.append(AIMessage(role="assistant", content=plain_content))
