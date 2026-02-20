@@ -1,11 +1,11 @@
 import uuid
-from datetime import datetime
 
 from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.database import Base
+from app.utils.timestamps import now_ist
 
 
 class RefreshToken(Base):
@@ -16,9 +16,9 @@ class RefreshToken(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), index=True, nullable=False)
 
     token_hash = Column(String(255), nullable=False)
-    expires_at = Column(DateTime, nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
     is_revoked = Column(Boolean, default=False, nullable=False)
 
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=now_ist, nullable=False)
 
     user = relationship("User", back_populates="refresh_tokens")

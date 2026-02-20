@@ -208,6 +208,35 @@
   color: #fff;
   font-size: 0.9rem;
   font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.note-card__header p {
+  margin: 0;
+}
+
+.icon-button {
+  background: rgba(226, 232, 240, 0.1);
+  border: 1px solid rgba(226, 232, 240, 0.3);
+  color: #e2e8f0;
+  padding: 0.35rem;
+  border-radius: 999px;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.icon-button:hover {
+  background: rgba(248, 113, 113, 0.2);
+  color: #fecaca;
+  transform: translateY(-1px);
 }
 
 .note-card__body {

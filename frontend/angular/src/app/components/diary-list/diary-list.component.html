@@ -83,6 +83,20 @@
         >
           <div class="note-card__header">
             <p>{{ formatDate(entry.created_at) }}</p>
+            <button
+              type="button"
+              class="icon-button"
+              (click)="onDeleteEntry(entry, $event)"
+              title="Delete note"
+              aria-label="Delete note"
+            >
+              <svg viewBox="0 0 20 20" focusable="false">
+                <path
+                  d="M6 6h8l-1 12H7L6 6zm2-3h4l1 1h3v2H2V4h3l1-1z"
+                  fill="currentColor"
+                ></path>
+              </svg>
+            </button>
           </div>
           <div class="note-card__body">
             <div *ngIf="entry.is_improved && entry.improved_text" class="improved-badge">

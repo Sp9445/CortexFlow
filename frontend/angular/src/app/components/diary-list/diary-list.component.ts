@@ -142,6 +142,36 @@ export class DiaryListComponent implements OnInit, OnDestroy {
 		this.subscriptions.push(sub);
 	}
 
+	onDeleteEntry(entry: DiaryEntry, event: MouseEvent): void {
+		event.stopPropagation();
+
+		if (!confirm('Are you sure you want to delete this note?')) {
+			return;
+		}
+
+		const url = `${environment.baseUrl}/diary/${entry.id}`;
+		const sub = this.appService.apiCall<void>(
+			'DELETE',
+			url,
+			undefined,
+			undefined,
+			{ withCredentials: true }
+		).subscribe({
+			next: () => {
+				this.diaryEntries = this.diaryEntries.filter((existing) => existing.id !== entry.id);
+				this.cd.detectChanges();
+			},
+			error: (e: any) => {
+				const error = e?.error as ErrorResponse;
+				this.errorMessage = error?.detail || 'Failed to delete entry';
+				console.error('Error deleting entry:', e);
+				this.cd.detectChanges();
+			},
+		});
+
+		this.subscriptions.push(sub);
+	}
+
     onNoteClick(entry: DiaryEntry): void {
         this.router.navigate(['/diary/edit/', entry.id]);
     }

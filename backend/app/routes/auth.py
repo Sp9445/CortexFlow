@@ -2,7 +2,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
+from datetime import timedelta
 from uuid import UUID
 
 from app.database import get_db
@@ -19,6 +19,7 @@ from app.utils.security import (
     verify_token_hash,
 )
 from app.config.settings import settings
+from app.utils.timestamps import now_ist
 from jose import jwt, JWTError
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -85,7 +86,7 @@ def login(login_data: LoginRequest, response: Response, db: Session = Depends(ge
     )
 
     # Store hashed refresh token
-    expires_at = datetime.utcnow() + timedelta(days=refresh_days)
+    expires_at = now_ist() + timedelta(days=refresh_days)
     token_hash = hash_token(refresh_token)
     db_refresh = RefreshToken(
         user_id=user.id,
@@ -166,7 +167,7 @@ def refresh(
     stored_token = db.query(RefreshToken).filter(
         RefreshToken.user_id == user_id,
         RefreshToken.is_revoked == False,
-        RefreshToken.expires_at > datetime.utcnow()
+        RefreshToken.expires_at > now_ist()
     ).first()
     if not stored_token or not verify_token_hash(refresh_token, stored_token.token_hash):
         raise HTTPException(status_code=401, detail="Invalid refresh token")
@@ -185,7 +186,7 @@ def refresh(
     )
 
     # Store new hashed refresh token
-    expires_at = datetime.utcnow() + timedelta(days=refresh_days)
+    expires_at = now_ist() + timedelta(days=refresh_days)
     new_token_hash = hash_token(new_refresh)
     new_db_refresh = RefreshToken(
         user_id=user_id,

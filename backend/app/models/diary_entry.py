@@ -1,11 +1,11 @@
 import uuid
-from datetime import datetime
 
 from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.database import Base
+from app.utils.timestamps import now_ist
 
 
 class DiaryEntry(Base):
@@ -21,7 +21,7 @@ class DiaryEntry(Base):
     is_improved = Column(Boolean, default=False, nullable=False)
     is_deleted = Column(Boolean, default=False, nullable=False)
 
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=now_ist, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=now_ist, onupdate=now_ist, nullable=False)
 
     user = relationship("User", back_populates="diary_entries")
