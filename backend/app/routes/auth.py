@@ -1,6 +1,9 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
+from uuid import UUID
 
 from app.database import get_db
 from app.schemas.auth import LoginRequest, TokenResponse, RefreshRequest
@@ -32,6 +35,12 @@ def _set_refresh_cookie(response: Response, refresh_token: str, max_age: int) ->
         samesite=settings.REFRESH_TOKEN_COOKIE_SAMESITE,
         path=settings.REFRESH_TOKEN_COOKIE_PATH,
         max_age=max_age,
+    )
+
+def _clear_refresh_cookie(response: Response) -> None:
+    response.delete_cookie(
+        key=settings.REFRESH_TOKEN_COOKIE_NAME,
+        path=settings.REFRESH_TOKEN_COOKIE_PATH,
     )
 
 @router.post("/register", response_model=UserResponse)
@@ -91,6 +100,37 @@ def login(login_data: LoginRequest, response: Response, db: Session = Depends(ge
     _set_refresh_cookie(response, refresh_token, cookie_max_age)
 
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+
+
+@router.post("/logout")
+def logout(request: Request, response: Response, db: Session = Depends(get_db)):
+    refresh_token = request.cookies.get(settings.REFRESH_TOKEN_COOKIE_NAME)
+    if refresh_token:
+        user_id: Optional[str] = None
+        try:
+            payload = jwt.decode(
+                refresh_token,
+                settings.SECRET_KEY,
+                algorithms=[settings.ALGORITHM]
+            )
+            if payload.get("type") == "refresh":
+                user_id = payload.get("sub")
+        except JWTError:
+            user_id = None
+
+        if user_id:
+            stored_tokens = db.query(RefreshToken).filter(
+                RefreshToken.user_id == UUID(user_id),
+                RefreshToken.is_revoked == False,
+            ).all()
+            for token in stored_tokens:
+                if verify_token_hash(refresh_token, token.token_hash):
+                    token.is_revoked = True
+                    db.commit()
+                    break
+
+    _clear_refresh_cookie(response)
+    return {"detail": "Logged out"}
 
 @router.post("/refresh", response_model=TokenResponse)
 def refresh(

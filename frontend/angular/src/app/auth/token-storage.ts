@@ -12,3 +12,12 @@ export function persistAuthTokens(response: AuthResponse): void {
     console.warn('Could not persist auth tokens', error);
   }
 }
+
+export function clearAuthTokens(): void {
+  try {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+  } catch (error) {
+    console.warn('Could not clear auth tokens', error);
+  }
+}

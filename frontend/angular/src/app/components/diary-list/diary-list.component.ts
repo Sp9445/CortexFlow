@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import { AppService } from '../../app.service';
 import { DiaryEntry, ErrorResponse } from '../../app.model';
 import { Subscription } from 'rxjs/internal/Subscription';
+import { clearAuthTokens } from '../../auth/token-storage';
 
 @Component({
 	selector: 'app-diary-list-component',
@@ -113,12 +114,32 @@ export class DiaryListComponent implements OnInit, OnDestroy {
 		// this.loadEntries();
 	}
 
-    onNewNote(): void {
-        this.router.navigate(['/diary/edit/0']);
-    }
+	onNewNote(): void {
+		this.router.navigate(['/diary/edit/0']);
+	}
 
 	onNewChat(): void {
 		this.router.navigate(['/ai-chat']);
+	}
+
+	onLogout(): void {
+		const sub = this.appService.apiCall<{ detail: string }>(
+			'POST',
+			environment.baseUrl + '/auth/logout',
+			undefined,
+			undefined,
+			{ withCredentials: true }
+		).subscribe({
+			next: () => {
+				clearAuthTokens();
+				this.router.navigate(['/login']);
+			},
+			error: (e: any) => {
+				console.error('Logout failed', e);
+			},
+		});
+
+		this.subscriptions.push(sub);
 	}
 
     onNoteClick(entry: DiaryEntry): void {
