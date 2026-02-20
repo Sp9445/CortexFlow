@@ -6,6 +6,7 @@ import { LoadingService } from './services/loading.service';
 
 interface ApiCallOptions {
   withCredentials?: boolean;
+  skipLoader?: boolean;
 }
 
 @Injectable({
@@ -54,6 +55,9 @@ export class AppService {
       httpOptions.withCredentials = true;
     }
 
+    const shouldSkipLoader =
+      options?.skipLoader ?? endpoint.toLowerCase().includes('/ai/answer');
+
     switch (method.toUpperCase()) {
       case 'GET':
         response$ = this.http.get<T>(endpoint, httpOptions);
@@ -72,6 +76,10 @@ export class AppService {
         break;
       default:
         throw new Error(`Unsupported HTTP method: ${method}`);
+    }
+
+    if (shouldSkipLoader) {
+      return response$;
     }
 
     this.loadingService.show();
