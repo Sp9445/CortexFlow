@@ -15,6 +15,16 @@
 					class="mt-1 block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
 			</div>
 
+			<div class="flex items-center space-x-2">
+				<input
+					id="remember_me"
+					name="remember_me"
+					type="checkbox"
+					class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+					[(ngModel)]="loginFormData.remember_me" />
+				<label for="remember_me" class="text-sm text-gray-600">Remember me</label>
+			</div>
+
 			<button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-md">Log in</button>
 
 			<div *ngIf="errorMessage" class="mt-2 text-sm text-red-600">{{ errorMessage }}</div>

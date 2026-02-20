@@ -3,6 +3,7 @@ import hashlib
 import base64
 from jose import jwt
 from datetime import datetime, timedelta
+from typing import Optional
 from app.config.settings import settings
 
 def pre_hash_password(password: str) -> str:
@@ -26,9 +27,10 @@ def create_access_token(data: dict) -> str:
     to_encode.update({"exp": expire, "type": "access"})
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
-def create_refresh_token(data: dict) -> str:
+def create_refresh_token(data: dict, expires_days: Optional[int] = None) -> str:
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    expire_days = expires_days if expires_days is not None else settings.REFRESH_TOKEN_EXPIRE_DAYS
+    expire = datetime.utcnow() + timedelta(days=expire_days)
     to_encode.update({"exp": expire, "type": "refresh"})
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 

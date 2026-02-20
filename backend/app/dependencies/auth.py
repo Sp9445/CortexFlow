@@ -11,16 +11,10 @@ from app.models.user import User
 from app.config.settings import settings  # assumes you have settings
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 
 
-def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
-) -> User:
-    """
-    Extracts user from JWT token and returns DB user object
-    """
-
+def _get_user_from_token(token: str, db: Session) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -48,3 +42,26 @@ def get_current_user(
         raise credentials_exception
 
     return user
+
+
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+) -> User:
+    """
+    Extracts user from JWT token and returns DB user object
+    """
+    return _get_user_from_token(token, db)
+
+
+def get_optional_current_user(
+    token: Optional[str] = Depends(oauth2_scheme_optional),
+    db: Session = Depends(get_db)
+) -> Optional[User]:
+    if not token:
+        return None
+
+    try:
+        return _get_user_from_token(token, db)
+    except HTTPException:
+        return None

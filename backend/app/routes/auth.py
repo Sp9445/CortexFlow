@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 
@@ -19,6 +19,20 @@ from app.config.settings import settings
 from jose import jwt, JWTError
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
+
+def _refresh_token_expires_in_days(remember_me: bool) -> int:
+    return settings.REMEMBER_ME_EXPIRE_DAYS if remember_me else settings.REFRESH_TOKEN_EXPIRE_DAYS
+
+def _set_refresh_cookie(response: Response, refresh_token: str, max_age: int) -> None:
+    response.set_cookie(
+        key=settings.REFRESH_TOKEN_COOKIE_NAME,
+        value=refresh_token,
+        httponly=True,
+        secure=settings.REFRESH_TOKEN_COOKIE_SECURE,
+        samesite=settings.REFRESH_TOKEN_COOKIE_SAMESITE,
+        path=settings.REFRESH_TOKEN_COOKIE_PATH,
+        max_age=max_age,
+    )
 
 @router.post("/register", response_model=UserResponse)
 def register(user_data: UserCreate, db: Session = Depends(get_db)):
@@ -42,7 +56,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     return user
 
 @router.post("/login", response_model=TokenResponse)
-def login(login_data: LoginRequest, db: Session = Depends(get_db)):
+def login(login_data: LoginRequest, response: Response, db: Session = Depends(get_db)):
     # Find user (not deleted)
     user = db.query(User).filter(
         User.username == login_data.username,
@@ -52,11 +66,17 @@ def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     # Create tokens
+    remember_me = bool(login_data.remember_me)
+    refresh_days = _refresh_token_expires_in_days(remember_me)
+
     access_token = create_access_token({"sub": str(user.id)})
-    refresh_token = create_refresh_token({"sub": str(user.id)})
+    refresh_token = create_refresh_token(
+        {"sub": str(user.id), "remember_me": remember_me},
+        expires_days=refresh_days,
+    )
 
     # Store hashed refresh token
-    expires_at = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    expires_at = datetime.utcnow() + timedelta(days=refresh_days)
     token_hash = hash_token(refresh_token)
     db_refresh = RefreshToken(
         user_id=user.id,
@@ -67,14 +87,30 @@ def login(login_data: LoginRequest, db: Session = Depends(get_db)):
     db.add(db_refresh)
     db.commit()
 
+    cookie_max_age = refresh_days * 24 * 60 * 60
+    _set_refresh_cookie(response, refresh_token, cookie_max_age)
+
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
 @router.post("/refresh", response_model=TokenResponse)
-def refresh(token_data: RefreshRequest, db: Session = Depends(get_db)):
+def refresh(
+    token_data: RefreshRequest,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+):
     # Decode the refresh token (ignore expiration for now)
+    refresh_token = (
+        token_data.refresh_token
+        or request.cookies.get(settings.REFRESH_TOKEN_COOKIE_NAME)
+    )
+
+    if not refresh_token:
+        raise HTTPException(status_code=401, detail="Missing refresh token")
+
     try:
         payload = jwt.decode(
-            token_data.refresh_token,
+            refresh_token,
             settings.SECRET_KEY,
             algorithms=[settings.ALGORITHM]
         )
@@ -92,18 +128,24 @@ def refresh(token_data: RefreshRequest, db: Session = Depends(get_db)):
         RefreshToken.is_revoked == False,
         RefreshToken.expires_at > datetime.utcnow()
     ).first()
-    if not stored_token or not verify_token_hash(token_data.refresh_token, stored_token.token_hash):
+    if not stored_token or not verify_token_hash(refresh_token, stored_token.token_hash):
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
     # Mark old token as revoked
     stored_token.is_revoked = True
 
     # Issue new tokens
+    remember_me = bool(payload.get("remember_me", False))
+    refresh_days = _refresh_token_expires_in_days(remember_me)
+
     new_access = create_access_token({"sub": user_id})
-    new_refresh = create_refresh_token({"sub": user_id})
+    new_refresh = create_refresh_token(
+        {"sub": user_id, "remember_me": remember_me},
+        expires_days=refresh_days,
+    )
 
     # Store new hashed refresh token
-    expires_at = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    expires_at = datetime.utcnow() + timedelta(days=refresh_days)
     new_token_hash = hash_token(new_refresh)
     new_db_refresh = RefreshToken(
         user_id=user_id,
@@ -113,5 +155,8 @@ def refresh(token_data: RefreshRequest, db: Session = Depends(get_db)):
     )
     db.add(new_db_refresh)
     db.commit()
+
+    cookie_max_age = refresh_days * 24 * 60 * 60
+    _set_refresh_cookie(response, new_refresh, cookie_max_age)
 
     return TokenResponse(access_token=new_access, refresh_token=new_refresh)

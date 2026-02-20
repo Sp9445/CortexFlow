@@ -6,6 +6,7 @@ import { Subscription } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AppService } from '../../app.service';
 import { LoginRequest, AuthResponse, ErrorResponse } from '../../app.model';
+import { persistAuthTokens } from '../../auth/token-storage';
 
 @Component({
 	selector: 'app-login-component',
@@ -15,7 +16,7 @@ import { LoginRequest, AuthResponse, ErrorResponse } from '../../app.model';
 	styleUrls: ['./login.component.css']
 })
 export class LoginComponent implements OnInit, OnDestroy {
-	loginFormData: LoginRequest = { username: '', password: '' };
+	loginFormData: LoginRequest = { username: '', password: '', remember_me: false };
 	errorMessage = '';
 	successMessage = '';
 
@@ -28,7 +29,7 @@ export class LoginComponent implements OnInit, OnDestroy {
 	}
 
 	private resetForm(): void {
-		this.loginFormData = { username: '', password: '' };
+		this.loginFormData = { username: '', password: '', remember_me: false };
 	}
 
 
@@ -39,20 +40,12 @@ export class LoginComponent implements OnInit, OnDestroy {
 		const sub = this.appService.apiCall<AuthResponse>(
 			'POST',
 			environment.baseUrl + '/auth/login',
-			this.loginFormData
+			this.loginFormData,
+			undefined,
+			{ withCredentials: true }
 		).subscribe({
 			next: (resp: AuthResponse) => {
-				// store tokens for subsequent requests
-				try {
-					if (resp.access_token) {
-						localStorage.setItem('access_token', resp.access_token);
-					}
-					if (resp.refresh_token) {
-						localStorage.setItem('refresh_token', resp.refresh_token);
-					}
-				} catch (e) {
-					console.warn('Could not persist auth tokens', e);
-				}
+				persistAuthTokens(resp);
 
 				this.successMessage = 'Login successful — redirecting...';
 				this.resetForm();

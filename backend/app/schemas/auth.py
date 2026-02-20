@@ -1,10 +1,12 @@
+from typing import Optional
+
 from pydantic import BaseModel
-from uuid import UUID
 
 
 class LoginRequest(BaseModel):
     username: str
     password: str
+    remember_me: bool = False
 
 
 class TokenResponse(BaseModel):
@@ -14,4 +16,4 @@ class TokenResponse(BaseModel):
 
 
 class RefreshRequest(BaseModel):
-    refresh_token: str
+    refresh_token: Optional[str] = None

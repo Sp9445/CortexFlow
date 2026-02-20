@@ -30,9 +30,20 @@ export class SignupComponent implements OnInit, OnDestroy {
 		this.signupFormData = { username: '', email: '', password: '' };
 	}
 
+	private isPasswordStrong(password: string): boolean {
+		return this.passwordPattern.test(password);
+	}
+
+	private passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W).{8,}$/;
+
 	async submit() {
 		this.successMessage = '';
 		this.errorMessage = '';
+		if (!this.isPasswordStrong(this.signupFormData.password)) {
+			this.errorMessage =
+				'Password must be at least 8 characters long and include uppercase, lowercase, numeric, and special characters.';
+			return;
+		}
 		try {
 			const sub = this.appService.apiCall<AuthResponse>(
 				'POST',

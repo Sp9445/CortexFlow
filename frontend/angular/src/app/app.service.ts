@@ -1,12 +1,18 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+import { LoadingService } from './services/loading.service';
+
+interface ApiCallOptions {
+  withCredentials?: boolean;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class AppService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private loadingService: LoadingService) {}
 
   /**
    * Common method to make HTTP requests
@@ -20,7 +26,8 @@ export class AppService {
     method: string,
     endpoint: string,
     data?: any,
-    headers?: HttpHeaders
+    headers?: HttpHeaders,
+    options?: ApiCallOptions
   ): Observable<T> {
     let response$: Observable<T>;
 
@@ -39,26 +46,35 @@ export class AppService {
       // ignore localStorage errors in non-browser environments
     }
 
+    const httpOptions: { headers: HttpHeaders; withCredentials?: boolean } = {
+      headers,
+    };
+
+    if (options?.withCredentials) {
+      httpOptions.withCredentials = true;
+    }
+
     switch (method.toUpperCase()) {
       case 'GET':
-        response$ = this.http.get<T>(endpoint, { headers });
+        response$ = this.http.get<T>(endpoint, httpOptions);
         break;
       case 'POST':
-        response$ = this.http.post<T>(endpoint, data, { headers });
+        response$ = this.http.post<T>(endpoint, data, httpOptions);
         break;
       case 'PUT':
-        response$ = this.http.put<T>(endpoint, data, { headers });
+        response$ = this.http.put<T>(endpoint, data, httpOptions);
         break;
       case 'PATCH':
-        response$ = this.http.patch<T>(endpoint, data, { headers });
+        response$ = this.http.patch<T>(endpoint, data, httpOptions);
         break;
       case 'DELETE':
-        response$ = this.http.delete<T>(endpoint, { headers });
+        response$ = this.http.delete<T>(endpoint, httpOptions);
         break;
       default:
         throw new Error(`Unsupported HTTP method: ${method}`);
     }
 
-    return response$;
+    this.loadingService.show();
+    return response$.pipe(finalize(() => this.loadingService.hide()));
   }
 }

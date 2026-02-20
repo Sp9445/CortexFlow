@@ -6,6 +6,7 @@
 export interface LoginRequest {
   username: string;
   password: string;
+  remember_me?: boolean;
 }
 
 export interface SignupRequest {
@@ -18,6 +19,10 @@ export interface AuthResponse {
   access_token: string;
   refresh_token?: string;
   token_type?: string;
+  user?: UserInfo;
+}
+
+export interface EnvironmentInformationResponse {
   user?: UserInfo;
 }
 
